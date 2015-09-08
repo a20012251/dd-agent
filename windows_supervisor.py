@@ -14,30 +14,19 @@ import time
 import signal
 import select
 import socket
-import psutil
 import logging
 import multiprocessing
-from optparse import Values
 from collections import deque
 
 # win32
 import win32api
 
+# 3p
+import psutil
+
 # project
 from win32.common import handle_exe_click
-from checks.collector import Collector
-from config import (
-    get_confd_path,
-    get_config,
-    get_system_stats,
-    load_check_directory,
-    PathNotFound,
-    set_win32_cert_path
-)
-from emitter import http_emitter
-from jmxfetch import JMXFetch
-import modules
-from util import get_hostname
+from config import get_config
 from utils.jmx import JMXFiles
 
 
@@ -59,23 +48,6 @@ class AgentSupervisor():
 
         # Should we listen for killing requests on port 9001 ?
         self.server_mode = server
-
-        # Setup the correct options so the agent will use the forwarder
-        opts, args = Values({
-            'autorestart': False,
-            'dd_url': None,
-            'use_forwarder': True,
-            'disabled_dd': False,
-            'profile': False
-        }), []
-        agent_config = get_config(parse_args=False, options=opts)
-        self.hostname = get_hostname(agent_config)
-
-        # Watchdog for Windows
-        self._collector_heartbeat, self._collector_send_heartbeat = multiprocessing.Pipe(False)
-        self._collector_failed_heartbeats = 0
-        self._max_failed_heartbeats = \
-            MAX_FAILED_HEARTBEATS * agent_config['check_freq'] / SERVICE_SLEEP_INTERVAL
 
         # Let's have an uptime counter
         self.start_ts = None
@@ -116,7 +88,6 @@ class AgentSupervisor():
         # Let's log the uptime
         if self.start_ts is None:
             self.start_ts = time.time()
-        time.sleep(SERVICE_SLEEP_INTERVAL*2)
         secs = int(time.time()-self.start_ts)
         mins = int(secs/60)
         hours = int(secs/3600)
@@ -148,8 +119,6 @@ class AgentSupervisor():
                     log.warning("%s has died. Restarting..." % name)
                     proc.restart()
 
-            self._check_collector_blocked()
-
             if(self.server_mode):
                 # Let's check if the service tried to connect to us
                 rlist, wlist, xlist = select.select([service_sock], [], [],
@@ -158,8 +127,6 @@ class AgentSupervisor():
                 for req in rlist:
                     transaction, info = req.accept()
                     clients.append(transaction)
-
-                log.info(str(len(clients)))
 
                 requests = []
                 try:
@@ -179,18 +146,6 @@ class AgentSupervisor():
                             time.sleep(SERVICE_SLEEP_INTERVAL)
             else:
                 time.sleep(SERVICE_SLEEP_INTERVAL)
-
-    def _check_collector_blocked(self):
-        if self._collector_heartbeat.poll():
-            while self._collector_heartbeat.poll():
-                self._collector_heartbeat.recv()
-            self._collector_failed_heartbeats = 0
-        else:
-            self._collector_failed_heartbeats += 1
-            if self._collector_failed_heartbeats > self._max_failed_heartbeats:
-                log.warning("%s was unresponsive for too long. Restarting..." % 'collector')
-                self.procs['collector'].restart()
-                self._collector_failed_heartbeats = 0
 
 
 class ProcessWatchDog(object):

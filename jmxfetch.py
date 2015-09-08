@@ -414,7 +414,6 @@ class JMXFetch(object):
             "libs", JMX_FETCH_JAR_NAME))
 
 
-
 def init(config_path=None):
     agentConfig = get_config(parse_args=False, cfg_path=config_path)
     try:
