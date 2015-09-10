@@ -55,7 +55,9 @@ from util import (
     get_uuid,
     json,
     Watchdog,
+    WindowsWatchdog,
 )
+from utils.platform import Platform
 
 log = logging.getLogger('forwarder')
 log.setLevel(get_logging_config()['log_level'] or logging.INFO)
@@ -402,8 +404,11 @@ class Application(tornado.web.Application):
 
         if watchdog:
             watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER
-            self._watchdog = Watchdog(watchdog_timeout,
-                                      max_mem_mb=agentConfig.get('limit_memory_consumption', None))
+            if Platform.is_win32(sys.platform):
+                self._watchdog = WindowsWatchdog(watchdog_timeout)
+            else:
+                self._watchdog = Watchdog(watchdog_timeout,
+                        max_mem_mb=agentConfig.get('limit_memory_consumption', None))
 
     def log_request(self, handler):
         """ Override the tornado logging method.

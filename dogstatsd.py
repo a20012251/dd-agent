@@ -37,6 +37,7 @@ from config import get_config, get_version
 from daemon import AgentSupervisor, Daemon
 from util import chunks, get_hostname, get_uuid, plural
 from utils.pidfile import PidFile
+from utils.platform import Platform
 
 # urllib3 logs a bunch of stuff at the info level
 requests_log = logging.getLogger("requests.packages.urllib3")
@@ -93,8 +94,12 @@ class Reporter(threading.Thread):
 
         self.watchdog = None
         if use_watchdog:
-            from util import Watchdog
-            self.watchdog = Watchdog(WATCHDOG_TIMEOUT)
+            if Platform.is_win32(sys.platform):
+                from util import WindowsWatchdog
+                self.watchdog = WindowsWatchdog(WATCHDOG_TIMEOUT)
+            else:
+                from util import Watchdog
+                self.watchdog = Watchdog(WATCHDOG_TIMEOUT)
 
         self.api_key = api_key
         self.api_host = api_host
