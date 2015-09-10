@@ -14,8 +14,13 @@ from nose.plugins.attrib import attr
 # needed because of the subprocess calls
 sys.path.append(os.getcwd())
 from ddagent import Application
-from util import Watchdog
+from util import WatchdogUnix, WatchdogWindows
+from utils.platform import Platform
 
+# which platform are we on ?
+unix = True
+if Platform.is_win_32(sys.platform):
+    unix = False
 
 @attr(requires='core_integration')
 class TestWatchdog(unittest.TestCase):
@@ -88,6 +93,7 @@ class MemoryHogTxManager(object):
             rand_data.append('%030x' % randrange(256**15))
             self._watchdog.reset()
 
+Watchdog = WatchdogUnix if unix else WatchdogWindows
 
 class PseudoAgent(object):
     """Same logic as the agent, simplified"""
@@ -144,6 +150,3 @@ if __name__ == "__main__":
     elif sys.argv[1] == "test":
         t = TestWatchdog()
         t.runTest()
-    elif sys.argv[1] == "memory":
-        a = PseudoAgent()
-        a.use_lots_of_memory()

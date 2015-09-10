@@ -424,7 +424,7 @@ class EC2(object):
             return None
 
 
-class WindowsWatchdog(threading.Thread):
+class WatchdogWindows(threading.Thread):
     """ Simple watchdog for Windows (relies on psutil) """
     def __init__(self, duration):
         import psutil
@@ -457,7 +457,7 @@ class WindowsWatchdog(threading.Thread):
             time.sleep(self._duration/20)
 
 
-class Watchdog(object):
+class WatchdogUnix(object):
     """Simple signal-based watchdog that will scuttle the current process
     if it has not been reset every N seconds, or if the processes exceeds
     a specified memory threshold.
@@ -469,7 +469,7 @@ class Watchdog(object):
 
         #Set the duration
         self._duration = int(duration)
-        signal.signal(signal.SIGALRM, Watchdog.self_destruct)
+        signal.signal(signal.SIGALRM, WatchdogUnix.self_destruct)
 
         # cap memory usage
         if max_mem_mb is not None:
@@ -495,7 +495,7 @@ class Watchdog(object):
         if self.memory_limit_enabled:
             mem_usage_kb = int(os.popen('ps -p %d -o %s | tail -1' % (os.getpid(), 'rss')).read())
             if mem_usage_kb > (0.95 * self._max_mem_kb):
-                Watchdog.self_destruct(signal.SIGKILL, sys._getframe(0))
+                WatchdogUnix.self_destruct(signal.SIGKILL, sys._getframe(0))
 
         log.debug("Resetting watchdog for %d" % self._duration)
         signal.alarm(self._duration)

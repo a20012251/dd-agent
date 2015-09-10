@@ -35,7 +35,14 @@ from aggregator import get_formatter, MetricsBucketAggregator
 from checks.check_status import DogstatsdStatus
 from config import get_config, get_version
 from daemon import AgentSupervisor, Daemon
-from util import chunks, get_hostname, get_uuid, plural
+from util import (
+    chunks,
+    get_hostname,
+    get_uuid,
+    plural,
+    WatchdogUnix,
+    WatchdogWindows
+)
 from utils.pidfile import PidFile
 from utils.platform import Platform
 
@@ -95,11 +102,9 @@ class Reporter(threading.Thread):
         self.watchdog = None
         if use_watchdog:
             if Platform.is_win32(sys.platform):
-                from util import WindowsWatchdog
-                self.watchdog = WindowsWatchdog(WATCHDOG_TIMEOUT)
+                self.watchdog = WatchdogWindows(WATCHDOG_TIMEOUT)
             else:
-                from util import Watchdog
-                self.watchdog = Watchdog(WATCHDOG_TIMEOUT)
+                self.watchdog = WatchdogUnix(WATCHDOG_TIMEOUT)
 
         self.api_key = api_key
         self.api_host = api_host

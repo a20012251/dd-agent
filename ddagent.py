@@ -54,8 +54,8 @@ from util import (
     get_tornado_ioloop,
     get_uuid,
     json,
-    Watchdog,
-    WindowsWatchdog,
+    WatchdogUnix,
+    WatchdogWindows,
 )
 from utils.platform import Platform
 
@@ -405,9 +405,9 @@ class Application(tornado.web.Application):
         if watchdog:
             watchdog_timeout = TRANSACTION_FLUSH_INTERVAL * WATCHDOG_INTERVAL_MULTIPLIER
             if Platform.is_win32(sys.platform):
-                self._watchdog = WindowsWatchdog(watchdog_timeout)
+                self._watchdog = WatchdogWindows(watchdog_timeout)
             else:
-                self._watchdog = Watchdog(watchdog_timeout,
+                self._watchdog = WatchdogUnix(watchdog_timeout,
                         max_mem_mb=agentConfig.get('limit_memory_consumption', None))
 
     def log_request(self, handler):

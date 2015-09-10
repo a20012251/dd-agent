@@ -37,8 +37,8 @@ from emitter import http_emitter
 from util import (
     EC2,
     get_hostname,
-    Watchdog,
-    WindowsWatchdog,
+    WatchdogUnix,
+    WatchdogWindows,
 )
 from utils.flare import configcheck, Flare
 from utils.jmx import jmx_command
@@ -184,9 +184,9 @@ class Agent(Daemon):
         watchdog = None
         if agentConfig.get("watchdog", True):
             if Platform.is_win32(sys.platform):
-                watchdog = WindowsWatchdog(check_freq * WATCHDOG_MULTIPLIER)
+                watchdog = WatchdogWindows(check_freq * WATCHDOG_MULTIPLIER)
             else:
-                watchdog = Watchdog(check_freq * WATCHDOG_MULTIPLIER,
+                watchdog = WatchdogUnix(check_freq * WATCHDOG_MULTIPLIER,
                                     max_mem_mb=agentConfig.get('limit_memory_consumption', None))
             watchdog.reset()
         return watchdog
