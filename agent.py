@@ -79,10 +79,6 @@ class Agent(Daemon):
             self.collector.stop()
         log.debug("Collector is stopped.")
 
-    def _handle_sigusr1(self, signum, frame):
-        self._handle_sigterm(signum, frame)
-        self._do_restart()
-
     @classmethod
     def info(cls, verbose=None):
         logging.getLogger().setLevel(logging.ERROR)
@@ -95,9 +91,6 @@ class Agent(Daemon):
         signal.signal(signal.SIGTERM, self._handle_sigterm)
 
         if Platform.is_win32(sys.platform):
-            # A SIGUSR1 signals an exit with an autorestart
-            signal.signal(signal.SIGUSR1, self._handle_sigusr1)
-
             # Handle Keyboard Interrupt
             signal.signal(signal.SIGINT, self._handle_sigterm)
 
