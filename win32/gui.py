@@ -435,6 +435,10 @@ class MainWindow(QSplitter):
                 self.show_html(self.properties.group_code, self.properties.html_window, False)]),
             ("JMX Fetch Logs", lambda: [self.properties.set_log_file(self.jmxfetch_log_file),
                 self.show_html(self.properties.group_code, self.properties.html_window, False)]),
+            ("Supervisor Logs", lambda: [self.properties.set_log_file(self.supervisor_log_file),
+                self.show_html(self.properties.group_code, self.properties.html_window, False)]),
+            ("Service Logs", lambda: [self.properties.set_log_file(self.service_log_file),
+                self.show_html(self.properties.group_code, self.properties.html_window, False)]),
             ("Agent Status", lambda: [self.properties.html_window.setHtml(self.properties.html_window.latest_status()),
                 self.show_html(self.properties.group_code, self.properties.html_window, True),
                 self.properties.set_status()]),
@@ -528,6 +532,14 @@ class MainWindow(QSplitter):
         self.dogstatsd_log_file = EditorFile(
             config.get('dogstatsd_log_file'),
             "Dogstatsd log file"
+        )
+        self.supervisor_log_file = EditorFile(
+            config.get('supervisor_log_file'),
+            "SUpervisor log file"
+        )
+        self.servicelog_file = EditorFile(
+            config.get('service_log_file'),
+            "Service log file"
         )
         self.jmxfetch_log_file = EditorFile(
             config.get('jmxfetch_log_file'),
